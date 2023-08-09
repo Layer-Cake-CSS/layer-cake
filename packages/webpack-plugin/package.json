@@ -1,0 +1,55 @@
+{
+  "name": "@layer-cake/webpack-plugin",
+  "version": "0.0.0",
+  "main": "./dist/layer-cake-webpack-plugin.cjs.js",
+  "types": "./dist/layer-cake-webpack-plugin.d.ts",
+  "module": "./dist/layer-cake-webpack-plugin.esm.js",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "module": "./dist/layer-cake-webpack-plugin.esm.js",
+      "default": "./dist/layer-cake-webpack-plugin.cjs.js"
+    },
+    "./loader": {
+      "module": "./loader/dist/layer-cake-webpack-plugin-loader.esm.js",
+      "default": "./loader/dist/layer-cake-webpack-plugin-loader.cjs.js"
+    },
+    "./css-loader": {
+      "module": "./loader/dist/layer-cake-webpack-plugin-css-loader.esm.js",
+      "default": "./loader/dist/layer-cake-webpack-plugin-css-loader.cjs.js"
+    }
+  },
+  "files": [
+    "/dist",
+    "/loader",
+    "/css-loader",
+    "extracted.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/layer-cake-css/layer-cake.git",
+    "directory": "packages/webpack-plugin"
+  },
+  "author": "Seb Toombs",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint \"**/*.ts*\"",
+    "build": "tsup"
+  },
+  "peerDependencies": {
+    "webpack": "^4.30.0 || ^5.20.2"
+  },
+  "devDependencies": {
+    "@tsconfig/node16-strictest-esm": "^1.0.3",
+    "@types/babel__core": "^7.20.0",
+    "enhanced-resolve": "^5.12.0",
+    "eslint": "^7.32.0",
+    "eslint-config-custom": "*",
+    "tsconfig": "*",
+    "tsup": "^6.6.3",
+    "typescript": "^4.5.2"
+  },
+  "dependencies": {
+    "@layer-cake/integration": "*"
+  }
+}

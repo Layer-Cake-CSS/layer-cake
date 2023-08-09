@@ -1,0 +1,4 @@
+{
+  "main": "../dist/layer-cake-webpack-plugin-loader.cjs.js",
+  "module": "../dist/layer-cake-webpack-plugin-loader.esm.js"
+}

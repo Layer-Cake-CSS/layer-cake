@@ -1,13 +1,14 @@
 {
-  "name": "styled",
+  "name": "layer-cake",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "examples/*",
+    "packages/*",
+    "tools/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --filter=!./examples/*",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
