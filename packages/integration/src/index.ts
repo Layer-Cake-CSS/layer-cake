@@ -10,7 +10,6 @@ export interface LayerCakeOptions {
   disableRuntime?: boolean; // disable runtime
 }
 
-export * from "./transform";
 export * from "./processFile";
 export * from "./compile";
 export * from "./ast-tools";
