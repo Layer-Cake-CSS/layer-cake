@@ -1,8 +1,9 @@
 import "./adapters/runtime-adapter";
-import "./adapters/ssr-adapter";
+// TODO ssr adapter
+// import "./adapters/ssr-adapter";
 
 import hyphenate from "hyphenate-style-name";
-import { appendCss, applyCss, registerClassName } from "./adapter";
+import { appendCss, applyCss } from "./adapter";
 import {
   CSSRule,
   CSSPropertyName,
