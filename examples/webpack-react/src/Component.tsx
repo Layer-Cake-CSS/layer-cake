@@ -9,6 +9,7 @@ export const Component = () => {
         backgroundColor: bg,
         color: "white",
         padding: "1rem",
+        margin: () => "1rem",
       })}
     >
       I am a component

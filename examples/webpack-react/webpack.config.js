@@ -20,6 +20,7 @@ module.exports = {
             loader: "babel-loader",
             options: {
               babelrc: false,
+              sourceType: "unambiguous",
               presets: [
                 "@babel/preset-typescript",
                 ["@babel/preset-react", { runtime: "automatic" }],
@@ -39,7 +40,9 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin(),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, "./index.html"),
+    }),
     new MiniCssExtractPlugin(),
     new LayerCakePlugin(),
   ],
