@@ -31,7 +31,8 @@
     "webpack": "^4.30.0 || ^5.20.2"
   },
   "dependencies": {
-    "@layer-cake/integration": "*"
+    "@layer-cake/integration": "*",
+    "loader-utils": "^2.0.0"
   },
   "devDependencies": {
     "webpack": "^5.36.1"
