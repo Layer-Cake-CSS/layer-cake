@@ -4,11 +4,11 @@ export default defineConfig({
   entry: {
     "layer-cake-webpack-plugin": "src/index.ts",
     "layer-cake-webpack-plugin-loader": "src/loader.ts",
-    "layer-cake-webpack-plugin-css-loader": "src/css-loader.ts",
+    "layer-cake-webpack-plugin-virtualFileLoader": "src/virtualFileLoader.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
-  splitting: false,
+  splitting: true,
   sourcemap: true,
   clean: true,
   outExtension({ format }) {
@@ -16,5 +16,6 @@ export default defineConfig({
       js: format === "cjs" ? ".cjs.js" : ".esm.js",
     };
   },
-  bundle: false,
+  bundle: true,
+  external: ["@layer-cake/integration"],
 });
