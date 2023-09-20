@@ -9,16 +9,20 @@ import { importFromStringSync } from "module-from-string";
 import { collectScope, parseAst } from "./ast-tools";
 import { serializeCss } from "./serialize";
 import { DefaultLayerCakeOptions, LayerCakeOptions } from ".";
+import { debug, formatAst, formatResourcePath } from "./logger";
 
 export interface ProcessFileOptions {
   source: string;
   filePath: string;
+  serializeVirtualCssPath?: (parameters: {
+    fileName: string;
+    virtualCssPath: string;
+    source: string;
+    serializedCss: string;
+  }) => string;
 }
 
 function dbg(message: string, obj: any = null, depth: number = 2) {
-  if (process.env.NODE_ENV !== "development") {
-    return;
-  }
   if (!obj && typeof message === "string") {
     console.log(message);
     return;
@@ -60,26 +64,30 @@ export function evaluateStyleArgument(
     ])
   );
 
-  // Evaluate the program - this will run the call expression and export the result
-  const callResult = importFromStringSync(
-    `
-    import {setAdapter} from "@layer-cake/core/adapter";
-    setAdapter(__adapter__);
-    import {style} from "@layer-cake/core";
-    ${output.code};
-    export const value = style(layer_cake_style_argument);`,
-    {
-      globals: {
-        console,
-        filname: filePath,
-        __adapter__: adapter,
-      },
-    }
-  ) as { value: string };
+  try {
+    // Evaluate the program - this will run the call expression and export the result
+    const callResult = importFromStringSync(
+      `
+      import {setAdapter} from "@layer-cake/core/adapter";
+      setAdapter(__adapter__);
+      import {style} from "@layer-cake/core";
+      ${output.code};
+      export const value = style(layer_cake_style_argument);`,
+      {
+        globals: {
+          console,
+          filname: filePath,
+          __adapter__: adapter,
+        },
+      }
+    ) as { value: string };
 
-  const { value: className } = callResult;
+    const { value: className } = callResult;
 
-  return className;
+    return className;
+  } catch (error) {
+    return null;
+  }
 }
 
 export function getLayerCakeReferences(ast: t.File) {
@@ -92,7 +100,7 @@ export function getLayerCakeReferences(ast: t.File) {
   // TODO
   // Current limitations;
   // - Cannot handle reassignment of style function
-  // - Does not evaluate style function if it is a member expression (e.g. `lc.style`)
+  // - more?
 
   // Traverse the AST and collect all imports from @layer-cake/core
   traverse(ast, {
@@ -140,10 +148,14 @@ export function getLayerCakeReferences(ast: t.File) {
     CallExpression(path) {
       if (
         t.isIdentifier(path.node.callee) &&
-        path.node.callee.name === "require" &&
+        (path.node.callee.name === "require" ||
+          path.node.callee.name === "__webpack_require__") &&
         path.node.arguments.length === 1 &&
         t.isStringLiteral(path.node.arguments[0]) &&
-        path.node.arguments[0].value === "@layer-cake/core" &&
+        (path.node.arguments[0].value === "@layer-cake/core" ||
+          path.node.arguments[0].value.match(
+            /\.\.\/\.\.\/packages\/core\/dist\/index/
+          )) &&
         t.isVariableDeclarator(path.parentPath?.node)
       ) {
         if (t.isIdentifier(path.parentPath.node.id)) {
@@ -212,22 +224,48 @@ export function getLayerCakeReferences(ast: t.File) {
   return layerCakeReferences;
 }
 
+export function identifyPaths(
+  layerCakeReferences: ReturnType<typeof getLayerCakeReferences>,
+  evaluatePath: (path: NodePath<t.Node>) => void
+) {
+  layerCakeReferences.forEach(({ importedName, path }) => {
+    if (importedName === "style" && t.isCallExpression(path.node)) {
+      // Grab the argument to the call expression (e.g. `style({color: 'red'})` => `{color: 'red'}`)
+      // const argument = Array.isArray(path.get("arguments")) ? path.get("arguments")[0] : path.get("arguments");
+      evaluatePath(path);
+    }
+    if (
+      importedName === "default" &&
+      t.isMemberExpression(path.node) &&
+      t.isIdentifier(path.node.property) &&
+      path.node.property.name === "style" &&
+      t.isSequenceExpression(path.parentPath?.node) &&
+      t.isCallExpression(path.parentPath?.parentPath?.node)
+    ) {
+      evaluatePath(path.parentPath?.parentPath!);
+    }
+  });
+}
+
 // bake -> true - perform static evaluation
 // bake -> false - do not perform static evaluation
 // extract && bake -> true - extract css to file
 
 export function processFile(
-  { source, filePath }: ProcessFileOptions,
+  { source, filePath, serializeVirtualCssPath }: ProcessFileOptions,
   {
     extract = DefaultLayerCakeOptions.extract,
     disableRuntime = DefaultLayerCakeOptions.disableRuntime,
-  }: LayerCakeOptions
+  }: LayerCakeOptions = {}
 ) {
+  const log = debug(`layer-cake:processFile:${formatResourcePath(filePath)}`);
+
   const ast = parseAst(source);
 
   const layerCakeReferences = getLayerCakeReferences(ast);
 
   if (!layerCakeReferences.length) {
+    log("No Layer Cake References", filePath);
     return source;
   }
 
@@ -245,60 +283,67 @@ export function processFile(
   };
 
   const localClassNames = new Set<string>();
-  let bufferedCSSObjects: Array<CSSObject> = [];
+  let bufferedCSSObjects: Set<CSSObject> = new Set();
 
-  const stringifiedCss = new Set<string>();
+  let stringifiedCss = "";
 
   const staticExtractAdapter: Adapter = {
     appendCss(css: CSSObject) {
-      bufferedCSSObjects.push(css);
+      bufferedCSSObjects.add(css);
     },
     registerClassName(className: string) {
       localClassNames.add(className);
     },
     applyCss() {
-      const css = transformCss(bufferedCSSObjects);
-      stringifiedCss.add(css);
+      stringifiedCss = transformCss(Array.from(bufferedCSSObjects));
     },
   };
 
-  layerCakeReferences.forEach(({ importedName, path }) => {
-    if (importedName === "style" && t.isCallExpression(path.node)) {
-      // Grab the argument to the call expression (e.g. `style({color: 'red'})` => `{color: 'red'}`)
-      // const argument = Array.isArray(path.get("arguments")) ? path.get("arguments")[0] : path.get("arguments");
-      const className = evaluateStyleArgument(
-        getArgument(path),
-        filePath,
-        staticExtractAdapter
-      );
-      if (className) {
-        path.replaceWith(t.stringLiteral(className));
+  identifyPaths(layerCakeReferences, (path) => {
+    const argument = getArgument(path);
+    const className = evaluateStyleArgument(
+      argument,
+      filePath,
+      staticExtractAdapter
+    );
+    if (!className) {
+      if (disableRuntime) {
+        const argumentFormatted = formatAst(argument.node);
+        throw new Error(
+          `Could not statically evaluate style call ${argumentFormatted}`
+        );
+      } else {
+        log(`Could not statically evaluate style call %a`, argument.node);
       }
     }
-    if (
-      importedName === "default" &&
-      t.isMemberExpression(path.node) &&
-      t.isIdentifier(path.node.property) &&
-      path.node.property.name === "style" &&
-      t.isSequenceExpression(path.parentPath?.node) &&
-      t.isCallExpression(path.parentPath?.parentPath?.node)
-    ) {
-      const className = evaluateStyleArgument(
-        getArgument(path.parentPath!.parentPath!),
-        filePath,
-        staticExtractAdapter
-      );
-      if (className) {
-        path.parentPath!.parentPath!.replaceWith(t.stringLiteral(className));
-      }
+    if (className) {
+      path.replaceWith(t.stringLiteral(className));
+      log("Replace Style call %a => %s", argument.node, className);
     }
   });
 
   const output = generate(ast).code;
 
-  const fileName = `${filePath}.layerCake.css`;
-  const serializedCss = serializeCss([...stringifiedCss.values()].join("\n"));
-  const cssImport = `import '${fileName}?source=${serializedCss}';`;
+  if (extract) {
+    const fileName = `${filePath}.layerCake.css`;
+    const css = stringifiedCss;
+    const serializedCss = serializeCss(css);
 
-  return `${cssImport}\n${output}`;
+    let virtualCssPath = `import '${fileName}?source=${serializedCss}';`;
+
+    if (typeof serializeVirtualCssPath === "function") {
+      virtualCssPath = serializeVirtualCssPath({
+        fileName,
+        virtualCssPath,
+        source: css,
+        serializedCss,
+      });
+    }
+
+    return `${virtualCssPath}\n${output}`;
+  }
+
+  // TODO evaled only CSS needs to be added to output via... a something
+
+  return output;
 }

@@ -24,7 +24,7 @@ export async function compile({
     write: false,
     // TODO test if ESM is ok for all cases?
     // Or maybe the compile step can be after the process step for non-webpack bundlers...?
-    format: "esm",
+    format: "cjs",
     plugins: [...(esbuildOptions?.plugins ?? [])],
     absWorkingDir: cwd,
     loader: esbuildOptions?.loader,

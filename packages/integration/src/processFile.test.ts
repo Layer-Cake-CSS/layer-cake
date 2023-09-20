@@ -194,6 +194,40 @@ describe("processFile", () => {
 
       expect(code).not.toMatch(/\(0, import_core\.style\)\(\{/);
     });
+    test("processes file - CJS, webpack", () => {
+      const source = `
+      /* harmony import */ var _layer_cake_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @layer-cake/core */ "@layer-cake/core");
+    /* harmony import */ var _layer_cake_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_layer_cake_core__WEBPACK_IMPORTED_MODULE_0__);
+    /* harmony import */ var react_dom_client__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom/client */ "../../node_modules/react-dom/client.js");
+    /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react/jsx-runtime */ "../../node_modules/react/jsx-runtime.js");
+    
+    const container = document.getElementById("root");
+    
+    // Create a root.
+    const root = react_dom_client__WEBPACK_IMPORTED_MODULE_1__.createRoot(container);
+    const className = (0,_layer_cake_core__WEBPACK_IMPORTED_MODULE_0__.style)({
+      backgroundColor: "red"
+    });
+    
+    // Initial render
+    root.render( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
+      className: (0,_layer_cake_core__WEBPACK_IMPORTED_MODULE_0__.style)({
+        backgroundColor: "hotpink",
+        color: "white",
+        padding: "1rem"
+      })
+    }));
+      `;
+
+      const code = processFile({
+        source,
+        filePath: "test.js",
+      });
+
+      expect(code).not.toMatch(
+        /\(0,_layer_cake_core__WEBPACK_IMPORTED_MODULE_0__\.style\)\(\{/
+      );
+    });
     test("processes file - ESM", () => {
       const source = `import { jsx } from "react/jsx-runtime";
       import { style } from "@layer-cake/core";
