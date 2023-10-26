@@ -1,6 +1,6 @@
 import { atoms as foo } from "@layer-cake/core";
 
-const bg = "hotpink";
+const bg = "orange";
 
 export const Component = () => {
   return (
