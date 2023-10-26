@@ -25,13 +25,15 @@ export function style(
     type: "local",
   }
 ) {
-  const cacheKey = className || hashObject(rule);
-  if (ruleMap.has(cacheKey)) return ruleMap.get(cacheKey);
-
-  const cacheValue = generateClass(rule, className);
-  ruleMap.set(cacheKey, cacheValue);
-
   const parsedRule = parseRule(rule);
+
+  const cacheKey = className || hashObject(parsedRule);
+  if (ruleMap.has(cacheKey)) {
+    return ruleMap.get(cacheKey);
+  }
+
+  const cacheValue = generateClass(parsedRule, className);
+  ruleMap.set(cacheKey, cacheValue);
 
   appendCss({
     type,
@@ -44,9 +46,11 @@ export function style(
 }
 
 export function atoms(rule: any) {
-  const cacheKey = hashObject(rule);
+  const parsedRule = parseRule(rule);
+
+  const cacheKey = hashObject(parsedRule);
   if (ruleMap.has(cacheKey)) return ruleMap.get(cacheKey);
-  const classNames = generateAtomicClasses(rule);
+  const classNames = generateAtomicClasses(parsedRule);
 
   const cacheValue = classNames.join(" ");
 
@@ -55,12 +59,17 @@ export function atoms(rule: any) {
 }
 
 export function parseRule(rule: CSSRule) {
-  const parsedRule = {} as CSSRule;
-  for (const [propertyName, value] of Object.entries(rule)) {
-    const cssProperty = hyphenate(propertyName);
-    parsedRule[cssProperty] = value;
-  }
-  return parsedRule;
+  const parsedArray = Object.entries(rule)
+    .filter(([_, value]) => {
+      if (typeof value === "function") return false;
+      return typeof value !== "undefined";
+    })
+    .map(([propertyName, value]) => {
+      const cssProperty = hyphenate(propertyName);
+      return [cssProperty, value];
+    });
+
+  return Object.fromEntries(parsedArray);
 }
 
 export function hashObject<InputObject extends Record<string, any>>(
@@ -78,13 +87,19 @@ export function hashObject<InputObject extends Record<string, any>>(
 export function generateIdentifier(rule: CSSRule) {
   const hashedRule = hashObject(rule);
 
-  const hashedIdentifier = hashedRule.match(/^[0-9]/)
-    ? `_${hashedRule}`
-    : hashedRule;
+  // cannot start with a digit, two hyphens, or a hyphen followed by a digit
 
-  // return CSS.escape(hashedIdentifier);
-  // TODO - escape the identifier
-  return hashedIdentifier;
+  let hashedIdentifier = hashedRule;
+  if (
+    hashedIdentifier.match(/^[0-9]/) ||
+    hashedIdentifier.match(/^-{2}/) ||
+    hashedIdentifier.match(/^-{1}[0-9]/)
+  ) {
+    hashedIdentifier = `_${hashedIdentifier}`;
+  }
+
+  // In build/server time envs, we polyfill this
+  return CSS.escape(hashedIdentifier);
 }
 
 export function generateClass(rule: CSSRule, className?: string) {
