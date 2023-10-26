@@ -3,9 +3,10 @@ import type { Adapter } from "@layer-cake/core/adapter";
 import { transformCss } from "@layer-cake/core/transform-css";
 import traverse, { NodePath } from "@babel/traverse";
 import { inspect } from "util";
+import path from "path";
 import * as t from "@babel/types";
 import generate from "@babel/generator";
-import { importFromStringSync } from "module-from-string";
+import { importFromStringSync, requireFromString } from "module-from-string";
 import { collectScope, parseAst } from "./ast-tools";
 import { serializeCss } from "./serialize";
 import { DefaultLayerCakeOptions, LayerCakeOptions } from ".";
@@ -40,12 +41,22 @@ export function evaluateStyleArgument(
   adapter: Adapter
 ) {
   // This is a VERY naive implementation of evaluating the argument to the call expression
-  // Things we need to do still:
-  // - Eval the object expression to see which keys/values can be statically evaluated
-  // - Replace non-statically evaluated values with CSS Vars & update runtime
-  // - Check if the runtime is enabled, and if not error when we cannot statically evaluate
+  // Currently this will ONLY evaluate object expressions (e.g. style({color: 'red'}))
+  // It will NOT evaluate literally anything else and will fall back to the runtime
 
-  if (!t.isObjectExpression(argumentPath.node)) {
+  // Things we need to do still:
+  // - If not an object expression, attempt to get one (e.g. traverse an identifier, eval a function etc.)
+  // - Attempt to eval the object expression to see which keys/values can be statically evaluated
+  // - Replace non-statically evaluated values with CSS Vars & update runtime to use CSS Vars
+  //   - If a value is not statically evaluated (replaced with CSS var), we need to somehow notify the parent that runtime in needed, in case the runtime has been disabled
+
+  if (
+    !(
+      t.isObjectExpression(argumentPath.node) ||
+      t.isMemberExpression(argumentPath.node)
+    )
+  ) {
+    dbg("Not an object expression", argumentPath.node);
     return;
   }
 
@@ -71,6 +82,7 @@ export function evaluateStyleArgument(
       import {setAdapter} from "@layer-cake/core/adapter";
       setAdapter(__adapter__);
       import {style} from "@layer-cake/core";
+
       ${output.code};
       export const value = style(layer_cake_style_argument);`,
       {
@@ -78,7 +90,11 @@ export function evaluateStyleArgument(
           console,
           filname: filePath,
           __adapter__: adapter,
+          CSS: {
+            escape: require("css.escape"),
+          },
         },
+        dirname: path.dirname(filePath),
       }
     ) as { value: string };
 
@@ -86,6 +102,7 @@ export function evaluateStyleArgument(
 
     return className;
   } catch (error) {
+    dbg("Error evaluating style argument", error);
     return null;
   }
 }
@@ -100,6 +117,7 @@ export function getLayerCakeReferences(ast: t.File) {
   // TODO
   // Current limitations;
   // - Cannot handle reassignment of style function
+  // - Need to handle `atoms` too
   // - more?
 
   // Traverse the AST and collect all imports from @layer-cake/core
@@ -246,10 +264,6 @@ export function identifyPaths(
     }
   });
 }
-
-// bake -> true - perform static evaluation
-// bake -> false - do not perform static evaluation
-// extract && bake -> true - extract css to file
 
 export function processFile(
   { source, filePath, serializeVirtualCssPath }: ProcessFileOptions,

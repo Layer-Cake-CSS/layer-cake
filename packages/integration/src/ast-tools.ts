@@ -17,6 +17,8 @@ export const parseAst = (source: string) => {
  * @param path
  * @returns
  */
+
+// TODO may need to recurse up the tree to get all bindings (e.g. __webpack_require__)
 export function collectScope(path: NodePath<t.Node>) {
   const scope = path.scope;
 
@@ -48,5 +50,7 @@ export function collectScope(path: NodePath<t.Node>) {
     })
     .filter(Boolean);
 
-  return nodes as t.Statement[];
+  return nodes as Array<
+    t.Statement | t.FunctionDeclaration | t.VariableDeclaration
+  >;
 }
