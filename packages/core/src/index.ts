@@ -17,13 +17,11 @@ export function style(
   rule: any,
   {
     className,
-    type,
+    type = "local" as CSSObjectType,
   }: {
     className?: string;
-    type: CSSObjectType;
-  } = {
-    type: "local",
-  }
+    type?: CSSObjectType;
+  } = {}
 ) {
   const parsedRule = parseRule(rule);
 

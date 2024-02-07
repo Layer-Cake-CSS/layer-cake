@@ -1,4 +1,0 @@
-{
-  "main": "../dist/layer-cake-webpack-plugin-virtualFileLoader.cjs.js",
-  "module": "../dist/layer-cake-webpack-plugin-virtualFileLoader.esm.js"
-}

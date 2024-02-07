@@ -1,8 +1,9 @@
 {
-  "extends": "tsconfig/react-library.json",
-  "include": ["."],
-  "exclude": ["dist", "build", "node_modules"],
+  "extends": "tsconfig/browser.json",
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "lib": ["dom"]
-  }
+    "outDir": "dist"
+  },
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

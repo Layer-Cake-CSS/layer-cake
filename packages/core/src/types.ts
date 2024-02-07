@@ -10,3 +10,8 @@ export type CSSObject = {
   selector: CSSSelector;
   rule: CSSRule;
 };
+
+export type FileScope = {
+  filePath: string;
+  packageName?: string;
+};

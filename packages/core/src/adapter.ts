@@ -1,5 +1,8 @@
-import type { CSSObject } from "./types";
+// import type { CSSObject } from "./types";
 
+type CSSObject = any;
+
+console.log('Load ADAPTER')
 export interface Adapter {
   appendCss: (css: CSSObject) => void;
   registerClassName: (className: string) => void;
@@ -9,6 +12,7 @@ export interface Adapter {
 const adapterStack: Array<Adapter> = [];
 
 export function setAdapter(adapter: Adapter) {
+  console.log('Set adapter', adapter)
   adapterStack.push(adapter);
 }
 export function setAdapterIfNotSet(adapter: Adapter) {
@@ -18,20 +22,15 @@ export function setAdapterIfNotSet(adapter: Adapter) {
 }
 
 export function currentAdapter() {
+  console.log('current adapter', adapterStack)
   if (adapterStack.length === 0) {
     throw new Error("No adapter found");
   }
-  return adapterStack[adapterStack.length - 1];
+  return adapterStack.at(-1);
 }
 
-export const registerClassName: Adapter["registerClassName"] = (...props) => {
-  return currentAdapter().registerClassName(...props);
-};
+export const registerClassName: Adapter["registerClassName"] = (...properties) => currentAdapter()?.registerClassName(...properties);
 
-export const appendCss: Adapter["appendCss"] = (...props) => {
-  return currentAdapter().appendCss(...props);
-};
+export const appendCss: Adapter["appendCss"] = (...properties) => currentAdapter()?.appendCss(...properties);
 
-export const applyCss: Adapter["applyCss"] = () => {
-  return currentAdapter().applyCss();
-};
+export const applyCss: Adapter["applyCss"] = () => currentAdapter()?.applyCss();

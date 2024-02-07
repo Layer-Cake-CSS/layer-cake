@@ -1,60 +1,37 @@
-import { style, atoms } from "@layer-cake/core";
-import { useState } from "react";
-import { Component } from "./Component";
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import { app } from './app.css'
 
-const getColor = () => {
-  return "white";
-};
+// import {style} from '@layer-cake/core'
 
-export const App = () => {
-  const [theme, setTheme] = useState("light");
-
-  // console.log(
-  //   "class",
-  //   style({
-  //     // backgroundColor: theme === "light" ? "red" : "hotpink",
-  //     color: getColor(),
-  //     padding: "1rem",
-  //   })
-  // );
+function App() {
+  const [count, setCount] = useState(0)
 
   return (
-    <div>
-      <button
-        onClick={() =>
-          theme === "light" ? setTheme("dark") : setTheme("light")
-        }
-      >
-        Change theme
-      </button>
-      <div
-        className={style({
-          "--some-var": "1px",
-          backgroundColor: theme === "light" ? "red" : "hotpink",
-          color: "white",
-          padding: "1rem",
-        })}
-      >
-        Theme. I should be {theme === "light" ? "red" : "hotpink"}
-        <div
-          className={style({
-            backgroundColor: "yellow",
-            padding: "1rem",
-          })}
-        >
-          Style
-        </div>
-        <div
-          className={atoms({
-            backgroundColor: theme === "light" ? "blue" : "green",
-            padding: "1rem",
-          })}
-        >
-          Atoms i should be {theme === "light" ? "blue" : "green"}
-          <div className={atoms({ backgroundColor: "yellow" })}>Atoms </div>
-        </div>
+    <>
+      <div className={[app].join(" ")}>
+        <a href="https://vitejs.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
       </div>
-      <Component />
-    </div>
-  );
-};
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
+}
+
+export default App
