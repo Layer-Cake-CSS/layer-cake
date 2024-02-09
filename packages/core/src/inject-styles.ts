@@ -1,17 +1,25 @@
+import { FileScope } from "./types";
+
 interface InjectStylesOptions {
-  filePath: string;
+  fileScope: FileScope;
   css: string;
 }
 
 const stylesheets: Record<string, HTMLElement> = {};
-export const injectStyles = ({ filePath, css }: InjectStylesOptions) => {
-  let stylesheet = stylesheets[filePath];
+export const injectStyles = ({ fileScope, css }: InjectStylesOptions) => {
+  const fileScopeId = fileScope.packageName
+    ? [fileScope.packageName, fileScope.filePath].join("/")
+    : fileScope.filePath;
+
+  let stylesheet = stylesheets[fileScopeId];
+
   if (!stylesheet) {
-    const styleEl = document.createElement("style");
-    styleEl.setAttribute("data-file", filePath);
-    styleEl.setAttribute("type", "text/css");
-    stylesheet = stylesheets[filePath] = styleEl;
-    document.head.appendChild(styleEl);
+    const styleElement = document.createElement("style");
+    styleElement.dataset.file = fileScopeId;
+    styleElement.setAttribute("type", "text/css");
+    stylesheet = styleElement;
+    stylesheets[fileScopeId] = stylesheet;
+    document.head.append(styleElement);
   }
 
   stylesheet.innerHTML = css;

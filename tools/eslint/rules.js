@@ -8,6 +8,10 @@ module.exports = {
     {
       allowList: {
         env: true,
+        Prop: true,
+        prop: true,
+        Props: true,
+        props: true,
       },
     },
   ],

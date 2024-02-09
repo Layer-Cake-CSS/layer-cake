@@ -15,7 +15,7 @@ export const browserRuntimeAdapter: Adapter = {
   },
   applyCss() {
     const css = transformCss(bufferedCSSObjects);
-    injectStyles({ css, filePath: "unknown" });
+    injectStyles({ css, fileScope: { filePath: "runtime" } });
   },
 };
 
