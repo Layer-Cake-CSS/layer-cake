@@ -82,6 +82,12 @@ export function hashObject<InputObject extends Record<string, any>>(
   return hash.toString(36);
 }
 
+export function escapeClassName(className: string) {
+  return cssesc(className.replaceAll(/\s+/g,'-'), {
+    isIdentifier: true,
+  });
+}
+
 export function generateIdentifier(rule: CSSRule) {
   const hashedRule = hashObject(rule);
 
@@ -96,8 +102,7 @@ export function generateIdentifier(rule: CSSRule) {
     hashedIdentifier = `_${hashedIdentifier}`;
   }
 
-  // In build/server time envs, we polyfill this
-  return cssesc(hashedIdentifier);
+  return escapeClassName(hashedIdentifier);
 }
 
 export function generateClass(rule: CSSRule, className?: string) {
@@ -112,7 +117,7 @@ export function generateAtomicIdentifier(
   propertyName: CSSPropertyName,
   value: CSSPropertyValue
 ) {
-  return cssesc(`${propertyName}--${value}`);
+  return escapeClassName(`${propertyName}--${value}`);
 }
 
 export function generateAtomicClasses<Rule extends CSSRule>(rule: Rule) {
