@@ -29,6 +29,7 @@
     "build": "tsup"
   },
   "devDependencies": {
+    "@types/cssesc": "^3.0.2",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/stylis": "^4.0.2",
     "eslint": "^8.56.0",
@@ -38,6 +39,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "cssesc": "^3.0.0",
     "hyphenate-style-name": "^1.0.4",
     "stylis": "^4.1.3"
   }

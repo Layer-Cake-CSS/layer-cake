@@ -74,5 +74,5 @@ export function processFile(
   );
   process.env.NODE_ENV = currentNodeEnvironment;
 
-  return source
+  
 }

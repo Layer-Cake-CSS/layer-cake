@@ -1,7 +1,7 @@
 import "./adapters/runtime-adapter";
 // TODO ssr adapter
 // import "./adapters/ssr-adapter";
-
+import cssesc from "cssesc";
 import hyphenate from "hyphenate-style-name";
 import { appendCss, applyCss } from "./adapter";
 import {
@@ -97,7 +97,7 @@ export function generateIdentifier(rule: CSSRule) {
   }
 
   // In build/server time envs, we polyfill this
-  return CSS.escape(hashedIdentifier);
+  return cssesc(hashedIdentifier);
 }
 
 export function generateClass(rule: CSSRule, className?: string) {
@@ -112,7 +112,7 @@ export function generateAtomicIdentifier(
   propertyName: CSSPropertyName,
   value: CSSPropertyValue
 ) {
-  return CSS.escape(`${propertyName}--${value}`);
+  return cssesc(`${propertyName}--${value}`);
 }
 
 export function generateAtomicClasses<Rule extends CSSRule>(rule: Rule) {

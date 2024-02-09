@@ -48,7 +48,7 @@ export async function compile({
     entryPoints: [filePath],
     metafile: true,
     bundle: true,
-    external: ["@vanilla-extract", ...(esbuildOptions?.external ?? [])],
+    external: ["@layer-cake", ...(esbuildOptions?.external ?? [])],
     platform: "node",
     write: false,
     plugins: [layerCakeTransformPlugin(), ...(esbuildOptions?.plugins ?? [])],

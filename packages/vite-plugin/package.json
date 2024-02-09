@@ -1,6 +1,9 @@
 {
   "name": "@layer-cake/vite-plugin",
   "version": "0.0.0",
+  "main": "index.js",
+  "module": "index.mjs",
+  "types": "index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -34,7 +37,7 @@
     "tsconfig": "*",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
-    "vite": "^2.7.0"
+    "vite": "^5.0.8"
   },
   "dependencies": {
     "@layer-cake/integration": "*"
