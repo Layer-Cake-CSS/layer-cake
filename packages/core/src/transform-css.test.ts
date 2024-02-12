@@ -1,9 +1,5 @@
 import { stringifyCssRule, transformCssObject } from "./transform-css";
 
-import { compile, middleware, prefixer, serialize, stringify } from "stylis";
-
-// serialize(compile(`h1{all:unset}`), stringify);
-
 describe("stringifyCssRule", () => {
   test("it should stringify pseudo classes", () => {
     expect(

@@ -4,7 +4,7 @@ import { injectStyles } from "../inject-styles";
 import { transformCss } from "../transform-css";
 
 const localClassNames = new Set<string>();
-let bufferedCSSObjects: Array<CSSObject> = [];
+const bufferedCSSObjects: Array<CSSObject> = [];
 
 export const browserRuntimeAdapter: Adapter = {
   appendCss(css) {

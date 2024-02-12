@@ -15,3 +15,5 @@ export type FileScope = {
   filePath: string;
   packageName?: string;
 };
+
+export interface LayerCakeOptions {}

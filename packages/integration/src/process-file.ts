@@ -1,12 +1,14 @@
-import type { CSSObject, FileScope } from "@layer-cake/core/types";
-import type { Adapter } from "@layer-cake/core/adapter";
+import { type FileScope } from "@layer-cake/core/types";
+import { StaticExtractAdapter } from "@layer-cake/core/adapters/static-adapter";
 import { transformCss } from "@layer-cake/core/transform-css";
-import { getFileScope } from "@layer-cake/core/file-scope";
-import { inspect } from "node:util";
 import evalCode from "eval";
-import { DefaultLayerCakeOptions, LayerCakeOptions, serializeCss } from ".";
-import { debug, formatResourcePath } from "./logger";
 import { stringify } from "javascript-stringify";
+import {
+  type DefaultLayerCakePluginOptions,
+  type LayerCakePluginOptions,
+} from "./types";
+import { debug, formatResourcePath } from "./logger";
+import { serializeCss } from "./serialize";
 
 export interface ProcessFileOptions {
   source: string;
@@ -24,26 +26,7 @@ export interface ProcessFileOptions {
   }) => string;
 }
 
-function dbg(message: string, object: any = null, depth: number = 2) {
-  if (!object && typeof message === "string") {
-    console.log(message);
-    return;
-  }
-  if (!object) {
-    console.log(inspect(message, { depth, colors: true }));
-    return;
-  }
-  console.log(message, inspect(object, { depth, colors: true }));
-}
-
 const originalNodeEnvironment = process.env.NODE_ENV;
-
-export function stringifyFileScope({
-  packageName,
-  filePath,
-}: FileScope): string {
-  return packageName ? `${filePath}$$$${packageName}` : filePath;
-}
 
 export function parseFileScope(serialisedFileScope: string): FileScope {
   const [filePath, packageName] = serialisedFileScope.split("$$$");
@@ -65,31 +48,14 @@ export function stringifyExport(value: any) {
 export function processFile(
   { source, filePath, serializeVirtualCssPath }: ProcessFileOptions,
   {
-    extract = DefaultLayerCakeOptions.extract,
-    disableRuntime = DefaultLayerCakeOptions.disableRuntime,
-  }: LayerCakeOptions = {},
+    extract = DefaultLayerCakePluginOptions.extract,
+    disableRuntime = DefaultLayerCakePluginOptions.disableRuntime,
+  }: LayerCakePluginOptions = {},
 ) {
   const log = debug(`layer-cake:processFile:${formatResourcePath(filePath)}`);
 
-  const cssByFileScope = new Map<string, Array<CSSObject>>();
-  const localClassNames = new Set<string>();
-
-  const staticExtractAdapter: Adapter = {
-    appendCss(css: CSSObject) {
-      const serialisedFileScope = stringifyFileScope(getFileScope());
-      const fileScopeCss = cssByFileScope.get(serialisedFileScope) ?? [];
-
-      fileScopeCss.push(css);
-
-      cssByFileScope.set(serialisedFileScope, fileScopeCss);
-    },
-    registerClassName(className: string) {
-      localClassNames.add(className);
-    },
-    applyCss() {
-      // stringifiedCss = transformCss([...bufferedCSSObjects]);
-    },
-  };
+  const { adapter: staticExtractAdapter, cssByFileScope } =
+    StaticExtractAdapter();
 
   const currentNodeEnvironment = process.env.NODE_ENV;
 

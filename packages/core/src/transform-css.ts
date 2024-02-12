@@ -20,10 +20,14 @@ export function stringifyCssRule(rule: CSSRule): string {
   }, "");
 }
 
+export function propertyNameToKebabCase(propertyName: string) {
+  return kebabCase(propertyName);
+}
+
 const propertyNameCaseMiddleware: Middleware = (element) => {
   if (element.type === "decl" && typeof element.props === "string") {
     const originalProp = element.props;
-    const newProp = kebabCase(originalProp);
+    const newProp = propertyNameToKebabCase(originalProp);
     // eslint-disable-next-line no-param-reassign
     element.props = newProp;
     // eslint-disable-next-line no-param-reassign
@@ -32,16 +36,18 @@ const propertyNameCaseMiddleware: Middleware = (element) => {
 };
 
 export function transformCssObject(cssObject: CSSObject) {
-  const { selector, rule } = cssObject;
+  const { selector, rule, type } = cssObject;
 
   const cssRule = stringifyCssRule(rule);
 
-  const css = serialize(
-    compile(`${selector} {${cssRule}}`),
+  const cssString = ["global", "atomic"].includes(type)
+    ? cssRule
+    : `${selector} {${cssRule}}`;
+
+  return serialize(
+    compile(cssString),
     middleware([propertyNameCaseMiddleware, prefixer, stringify]),
   );
-
-  return css;
 }
 
 export function transformCss(cssObjects: CSSObject[]) {

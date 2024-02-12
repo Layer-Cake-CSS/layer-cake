@@ -27,6 +27,7 @@
   "scripts": {
     "lint": "eslint . --ext .ts",
     "build": "tsup",
+    "dev": "npm run build -- --watch",
     "test": "jest"
   },
   "devDependencies": {

@@ -22,6 +22,8 @@ export function layerCake(): Plugin {
   let config: ResolvedConfig;
   let server: ViteDevServer;
 
+  // TODO
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let packageName: string;
 
   const cssMap = new Map<string, string>();
