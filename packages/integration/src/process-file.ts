@@ -4,7 +4,7 @@ import { transformCss } from "@layer-cake/core/transform-css";
 import evalCode from "eval";
 import { stringify } from "javascript-stringify";
 import {
-  type DefaultLayerCakePluginOptions,
+  DefaultLayerCakePluginOptions,
   type LayerCakePluginOptions,
 } from "./types";
 import { debug, formatResourcePath } from "./logger";
