@@ -10,6 +10,9 @@ import {
   processFile,
   compile,
   getPackageInfo,
+  LayerCakePluginOptions,
+  DefaultLayerCakePluginOptions,
+  CompileOptions,
 } from "@layer-cake/integration";
 
 const virtualImportExtensionCss = ".layer-cake.css";
@@ -18,7 +21,18 @@ const virtualImportExtensionJs = ".layer-cake.js";
 const styleUpdateEvent = (fileId: string) =>
   `layer-cake-style-update:${fileId}`;
 
-export function layerCake(): Plugin {
+export interface LayerCakeVitePluginOptions extends LayerCakePluginOptions {
+  esbuildOptions: CompileOptions["esbuildOptions"];
+}
+
+export function layerCake(options: LayerCakeVitePluginOptions): Plugin {
+  const { esbuildOptions, ...pluginOptions } = options;
+
+  const defaultedOptions = {
+    ...DefaultLayerCakePluginOptions,
+    ...pluginOptions,
+  };
+
   let config: ResolvedConfig;
   let server: ViteDevServer;
 
@@ -125,8 +139,7 @@ export function layerCake(): Plugin {
       const { source, watchFiles } = await compile({
         filePath: validId,
         cwd: config.root,
-        // TODO esbuildOptions
-        // esbuildOptions,
+        esbuildOptions,
       });
 
       for (const file of watchFiles) {
@@ -135,43 +148,46 @@ export function layerCake(): Plugin {
         }
       }
 
-      const output = await processFile({
-        source,
-        filePath: validId,
-        serializeVirtualCssPath: ({ fileScope, source: cssSource }) => {
-          const rootRelativeId = `${fileScope.filePath}${config.command === "build" ? virtualImportExtensionCss : virtualImportExtensionJs}`;
-          const absoluteId = getAbsoluteVirtualFileId(rootRelativeId);
+      const output = await processFile(
+        {
+          source,
+          filePath: validId,
+          serializeVirtualCssPath: ({ fileScope, source: cssSource }) => {
+            const rootRelativeId = `${fileScope.filePath}${config.command === "build" ? virtualImportExtensionCss : virtualImportExtensionJs}`;
+            const absoluteId = getAbsoluteVirtualFileId(rootRelativeId);
 
-          if (
-            server &&
-            cssMap.has(absoluteId) &&
-            cssMap.get(absoluteId) !== source
-          ) {
-            const { moduleGraph } = server;
-            const [module] = [
-              ...(moduleGraph.getModulesByFile(absoluteId) || []),
-            ];
+            if (
+              server &&
+              cssMap.has(absoluteId) &&
+              cssMap.get(absoluteId) !== source
+            ) {
+              const { moduleGraph } = server;
+              const [module] = [
+                ...(moduleGraph.getModulesByFile(absoluteId) || []),
+              ];
 
-            if (module) {
-              moduleGraph.invalidateModule(module);
+              if (module) {
+                moduleGraph.invalidateModule(module);
 
-              // Vite uses this timestamp to add `?t=` query string automatically for HMR.
-              module.lastHMRTimestamp =
-                (module as any).lastInvalidationTimestamp || Date.now();
+                // Vite uses this timestamp to add `?t=` query string automatically for HMR.
+                module.lastHMRTimestamp =
+                  (module as any).lastInvalidationTimestamp || Date.now();
+              }
+
+              server.ws.send({
+                type: "custom",
+                event: styleUpdateEvent(absoluteId),
+                data: cssSource,
+              });
             }
 
-            server.ws.send({
-              type: "custom",
-              event: styleUpdateEvent(absoluteId),
-              data: cssSource,
-            });
-          }
+            cssMap.set(absoluteId, cssSource);
 
-          cssMap.set(absoluteId, cssSource);
-
-          return `import "${rootRelativeId}"`;
+            return `import "${rootRelativeId}"`;
+          },
         },
-      });
+        defaultedOptions,
+      );
 
       return {
         // @ts-ignore
