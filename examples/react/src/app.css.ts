@@ -1,7 +1,7 @@
-import { style } from "@layer-cake/core";
+import { style } from "./layer-cake";
 
 export const app = style({
-  backgroundColor: "red",
+  backgroundColor: "purple",
   padding: "10px",
   "&:hover": {
     backgroundColor: "blue",
