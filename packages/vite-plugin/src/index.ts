@@ -25,8 +25,8 @@ export interface LayerCakeVitePluginOptions extends LayerCakePluginOptions {
   esbuildOptions: CompileOptions["esbuildOptions"];
 }
 
-export function layerCake(options: LayerCakeVitePluginOptions): Plugin {
-  const { esbuildOptions, ...pluginOptions } = options;
+export function layerCake(options?: LayerCakeVitePluginOptions): Plugin {
+  const { esbuildOptions, ...pluginOptions } = options || {};
 
   const defaultedOptions = {
     ...DefaultLayerCakePluginOptions,
